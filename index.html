@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="theme-color" content="#1b4965">
+<title>Room Index — Measurement Points</title>
+<link rel="manifest" href="manifest.json">
+<style>
+  :root { --bg:#f5f7fa; --card:#ffffff; --ink:#1b2a3a; --accent:#1b4965; --ok:#2a9d8f; }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    background:var(--bg); color:var(--ink); padding:16px;
+  }
+  h1 { font-size:1.25rem; text-align:center; margin:8px 0 16px; color:var(--accent); }
+  .card {
+    background:var(--card); border-radius:14px; padding:16px;
+    box-shadow:0 2px 10px rgba(0,0,0,.08); margin-bottom:14px;
+  }
+  label { display:block; font-size:.85rem; margin:10px 0 4px; font-weight:600; }
+  input[type=number] {
+    width:100%; padding:12px; font-size:1.1rem; border:1px solid #c8d0d8;
+    border-radius:10px; background:#fbfcfd;
+  }
+  input:focus { outline:2px solid var(--accent); border-color:var(--accent); }
+  .result { text-align:center; }
+  .big { font-size:3rem; font-weight:800; color:var(--ok); line-height:1; }
+  .sub { font-size:.9rem; color:#5a6b7b; margin-top:6px; }
+  .kval { font-size:1.1rem; font-weight:700; color:var(--accent); }
+  .err { color:#c1121f; font-size:.85rem; text-align:center; min-height:1.2em; }
+  .grid-hint { margin-top:10px; font-size:.9rem; background:#eef5f9;
+               padding:8px 10px; border-radius:8px; color:var(--accent); }
+  img { width:100%; border-radius:10px; margin-top:8px; }
+  button { width:100%; padding:12px; margin-top:10px; font-size:1rem;
+           border:0; border-radius:10px; background:var(--accent); color:#fff; font-weight:700; }
+</style>
+</head>
+<script>
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+</script>
+<body>
+  <h1>Lighting Measurement Points</h1>
+
+  <div class="card">
+    <label for="L">Room length L (m)</label>
+    <input id="L" type="number" inputmode="decimal" step="0.1" min="0.1" placeholder="e.g. 8">
+    <label for="W">Room width W (m)</label>
+    <input id="W" type="number" inputmode="decimal" step="0.1" min="0.1" placeholder="e.g. 5">
+    <label for="Hm">Mounting height Hm above work plane (m)</label>
+    <input id="Hm" type="number" inputmode="decimal" step="0.1" min="0.1" placeholder="e.g. 1.8">
+    <button onclick="compute()">Calculate</button>
+    <div class="err" id="err"></div>
+  </div>
+
+  <div class="card result" id="resultCard" style="display:none">
+    <div class="sub">Minimum measurement points</div>
+    <div class="big" id="points">–</div>
+    <div class="kval">Room Index K = <span id="kval">–</span></div>
+    <div class="grid-hint" id="gridHint"></div>
+  </div>
+
+  <div class="card" id="chartCard" style="display:none">
+    <div class="sub" style="margin-bottom:6px">Nomogram (visual check)</div>
+    <img src="nomogram.png" alt="Room index nomogram">
+  </div>
+
+<script>
+function compute() {
+  const L  = parseFloat(document.getElementById('L').value);
+  const W  = parseFloat(document.getElementById('W').value);
+  const Hm = parseFloat(document.getElementById('Hm').value);
+  const err = document.getElementById('err');
+  err.textContent = '';
+
+  if (!(L > 0) || !(W > 0) || !(Hm > 0)) {
+    err.textContent = 'Please enter positive numbers for L, W and Hm.';
+    document.getElementById('resultCard').style.display = 'none';
+    return;
+  }
+
+  const K = (L * W) / (Hm * (L + W));
+  let pts, grid;
+  if (K < 1)       { pts = 4;  grid = '2 × 2'; }
+  else if (K < 2)  { pts = 9;  grid = '3 × 3'; }
+  else if (K < 3)  { pts = 16; grid = '4 × 4'; }
+  else             { pts = 25; grid = '5 × 5'; }
+
+  document.getElementById('points').textContent = pts;
+  document.getElementById('kval').textContent = K.toFixed(2);
+  document.getElementById('gridHint').textContent =
+      `Suggested layout: ${grid} symmetric grid ` +
+      `(${pts} points). Adjust to suit room shape.`;
+  document.getElementById('resultCard').style.display = 'block';
+  document.getElementById('chartCard').style.display = 'block';
+}
+</script>
+</body>
+</html>
